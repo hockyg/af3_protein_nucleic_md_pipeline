@@ -1,6 +1,23 @@
 import os
 import sys
 
+def get_energies(sim1, sim3_start_idx, sim3_size, sim2, sim3):
+    from openmm import unit
+    c1 = sim1.context.getState(getEnergy=True,getPositions=True)
+    total_energy = c1.getPotentialEnergy()
+    system_positions = c1.getPositions()
+
+    protein_positions = system_positions[:sim3_start_idx]
+    nuc_positions = system_positions[sim3_start_idx:sim3_start_idx+sim3_size]
+
+    sim2.context.setPositions(protein_positions)
+    sim3.context.setPositions(nuc_positions)
+
+    protein_energy = sim2.context.getState(getEnergy=True).getPotentialEnergy()
+    nuc_energy = sim3.context.getState(getEnergy=True).getPotentialEnergy()
+    #return energies in kJ/mol
+    return [total_energy.value_in_unit(unit.kilojoule/unit.mole), protein_energy.value_in_unit(unit.kilojoule/unit.mole), nuc_energy.value_in_unit(unit.kilojoule/unit.mole), (total_energy-protein_energy-nuc_energy).value_in_unit(unit.kilojoule/unit.mole)]
+
 def run_md(cif_file):
     def analyze(xtc, pdb):
         import mdtraj as md
@@ -79,12 +96,12 @@ def run_md(cif_file):
     if not os.path.exists(f'{prefix}_run.xtc'):
         temperature=300
         #for production:
-        #equilibrationSteps=25000 #100 ps
-        #nsteps=2500000 # 10 ns
+        equilibrationSteps=25000 #100 ps
+        nsteps=2500000 # 10 ns
 
         #for testing
-        equilibrationSteps=2500 #10 ps
-        nsteps=25000 # 100ps 
+        #equilibrationSteps=2500 #10 ps
+        #nsteps=25000 # 100ps 
 
         pair_energy_steps=1000
     
@@ -108,6 +125,34 @@ def run_md(cif_file):
         simulation = app.Simulation(modeller.topology, system, integrator, platform, properties)
         simulation.context.setPositions(modeller.positions)
 
+
+        #make other systems to calculat eenergy
+
+        protein_modeller = app.Modeller(modeller.topology, modeller.positions)
+        nuc_modeller = app.Modeller(modeller.topology, modeller.positions)
+
+        not_protein_chains = [c for cidx, c in enumerate(protein_modeller.topology.chains()) if cidx!=0]
+        not_nuc_chains = [c for cidx, c in enumerate(nuc_modeller.topology.chains()) if cidx!=1]
+
+        protein_modeller.delete(not_protein_chains)
+        nuc_modeller.delete(not_nuc_chains)
+
+        #assume first protein then nuc
+        n_protein_atoms = len([a for a in protein_modeller.topology.atoms()])
+        n_nuc_atoms = len([a for a in nuc_modeller.topology.atoms()])
+
+        systemProt = forcefield.createSystem(protein_modeller.topology, nonbondedMethod=app.NoCutoff,
+                nonbondedCutoff=1*unit.nanometer, constraints=app.AllBonds, hydrogenMass=3*unit.amu)
+        pintegrator = openmm.LangevinMiddleIntegrator(temperature*unit.kelvin, 1/unit.picosecond, 0.004*unit.picoseconds)
+        simulationProt = app.Simulation(protein_modeller.topology, systemProt, pintegrator, platform, properties)
+        simulationProt.context.setPositions(protein_modeller.positions)
+
+        systemNuc = forcefield.createSystem(nuc_modeller.topology, nonbondedMethod=app.NoCutoff,
+                nonbondedCutoff=1*unit.nanometer, constraints=app.AllBonds, hydrogenMass=3*unit.amu)
+        nintegrator = openmm.LangevinMiddleIntegrator(temperature*unit.kelvin, 1/unit.picosecond, 0.004*unit.picoseconds)
+        simulationNuc = app.Simulation(nuc_modeller.topology, systemNuc, nintegrator, platform, properties)
+        simulationNuc.context.setPositions(nuc_modeller.positions)
+
         #simulation.reporters.append(app.PDBReporter(f'{prefix}_min.pdb', ,enforcePeriodicBox=False))
 
         print("Minimizing")
@@ -120,7 +165,15 @@ def run_md(cif_file):
         
         simulation.context.setVelocitiesToTemperature(temperature)
         simulation.step(equilibrationSteps)
+
+        interaction_fh = open(f'{prefix}.interactions.log','w')
+        interaction_fh.write("# Step P+N P N dE (kJ/mol)\n")
         
+        #print("\tPost equilibration energies (P+N,P,N) (kJ/mol)")
+        energy_list = []
+        energies = get_energies(simulation, n_protein_atoms,  n_nuc_atoms, simulationProt, simulationNuc)
+        interaction_fh.write("0 %f %f %f %f\n"%tuple(energies))
+
         print("Running MD")
         simulation.reporters.pop()
         xtcReporter = app.XTCReporter(f'{prefix}_run.xtc', pair_energy_steps, enforcePeriodicBox=False)
@@ -128,10 +181,16 @@ def run_md(cif_file):
         current_step = 0
         while current_step < nsteps:
             simulation.step(pair_energy_steps)
-       
-    rmsd, rmsf = analyze(f'{prefix}_run.xtc', f'{prefix}_equil.pdb')
+            energies = get_energies(simulation, n_protein_atoms,  n_nuc_atoms, simulationProt, simulationNuc)
+            current_step = current_step + pair_energy_steps
+            interaction_fh.write("%d %f %f %f %f\n"%tuple( [current_step]+energies ))
+            energy_list.append(energies)
+
+        interaction_fh.close()
+
+#    rmsd, rmsf = analyze(f'{prefix}_run.xtc', f'{prefix}_equil.pdb')
     
-    print (rmsd, rmsf)
+#    print (rmsd, rmsf)
     return 0
 
 
