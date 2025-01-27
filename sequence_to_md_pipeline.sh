@@ -2,7 +2,7 @@
 input_file=$1
 if [ -z "$input_file" ];then
 	echo "Usage: $0 input_file"
-	echo -e "\tFirst line = DNA sequence\n\tSecond line = RNA sequence"
+	echo -e "\tFirst line = Protein sequence\n\tSecond line = DNA/RNA sequence"
         exit 1
 fi
 

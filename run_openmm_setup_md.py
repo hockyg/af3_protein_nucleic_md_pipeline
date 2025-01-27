@@ -173,6 +173,7 @@ def run_md(cif_file):
         energy_list = []
         energies = get_energies(simulation, n_protein_atoms,  n_nuc_atoms, simulationProt, simulationNuc)
         interaction_fh.write("0 %f %f %f %f\n"%tuple(energies))
+        interaction_fh.flush()
 
         print("Running MD")
         simulation.reporters.pop()
@@ -184,6 +185,7 @@ def run_md(cif_file):
             energies = get_energies(simulation, n_protein_atoms,  n_nuc_atoms, simulationProt, simulationNuc)
             current_step = current_step + pair_energy_steps
             interaction_fh.write("%d %f %f %f %f\n"%tuple( [current_step]+energies ))
+            interaction_fh.flush()
             energy_list.append(energies)
 
         interaction_fh.close()
