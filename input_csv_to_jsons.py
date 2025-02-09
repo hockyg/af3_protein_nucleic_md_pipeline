@@ -6,6 +6,7 @@ def create_json_file(input_csv_row, output_json_file, mutid=0, ref=False):
     protein_seq = input_csv_row["peptide_sequence"]
 
     output_energy_file = output_json_file.replace(".input.json",".energy.txt")
+    label = os.path.basename(output_json_file.replace(".input.json",""))
 
     if ref is True:
         nuc_strand_1 = input_csv_row["wild_nucleotide_strand1"]
@@ -74,7 +75,7 @@ def create_json_file(input_csv_row, output_json_file, mutid=0, ref=False):
     "version": 1
     }"""
 
-    output_json = output_json_template%(name, protein_seq.strip(), nuc_string, ion_chains)
+    output_json = output_json_template%(label, protein_seq.strip(), nuc_string, ion_chains)
 
     print(f"# Writing sequence data for {nuc_name} + mut {mutid}, to {output_json_file}")
     with open(output_json_file,'w') as fh:

@@ -25,7 +25,7 @@ output_json=${output_dir}/${label}_data.json
 if [ ! -e ${output_json} ];then
     $pipelinedir/run-af3-structure-prediction.sh \
     --json_path=${input_json} \
-    --output_dir=$output_dir \
+    --output_dir=$(dirname $output_dir) \
     --run_data_pipeline=true \
     --run_inference=false 
 fi 
