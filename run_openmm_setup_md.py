@@ -43,7 +43,7 @@ def run_md(cif_file):
         for chainidx, chain in enumerate(chains):
             residues = [r for r in chain.residues()]
             #print(residues[0].name)
-            if residues[0].name in ["A","C","T","G","U"]:
+            if residues[0].name in ["A","C","T","G","U", "DA", "DC", "DT", "DG"]:
                 atoms0 = residues[0].atoms()
                 for atom in atoms0:
                     if atom.name in ["OP1","OP2","OP3","P"]:
