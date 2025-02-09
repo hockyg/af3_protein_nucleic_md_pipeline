@@ -29,7 +29,6 @@ def create_json_file(input_csv_row, output_json_file, mutid=0, ref=False):
     nuc_name = input_csv_row["nucleotide_sequence_type"].lower()
 
     if(nuc_strand_2):
-        print("2 nucleotide strands")
         num_nuc_chains = 2
         nuc_string = """{
                 "%s": {
@@ -45,7 +44,7 @@ def create_json_file(input_csv_row, output_json_file, mutid=0, ref=False):
             }"""%(nuc_name, nuc_strand_1.strip(), nuc_name, nuc_strand_2.strip())
     else:
         num_nuc_chains = 1
-        nuc_string = """{%s: {
+        nuc_string = """{"%s": {
             "id": ["B"],
             "sequence": "%s"
             }}"""%(nuc_name, nuc_strand_1.strip()) 
