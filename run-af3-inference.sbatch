@@ -6,7 +6,7 @@
 #SBATCH --time=01:00:00
 #SBATCH --mem=60GB
 #SBATCH --gres=gpu:1
-##SBATCH --constraint=a100|h100
+#SBATCH --constraint=a100|h100
 #SBATCH --job-name=run-inference
 
 set -x 
@@ -16,13 +16,13 @@ pipelinedir=/home/gmh4/projects/binding_affinity_md_af/af3_protein_rna_pipeline
 label=$(basename $json_path _data.json)
 model_cif=$(dirname $json_path)/${label}_model.cif
 
-if [ ! -e "$model_cif" ];then
+if [ ! -e "${model_cif}" ];then
 
-$pipelinedir/run-af3-structure-prediction.sh \
---json_path=${json_path} \
---output_dir=output \
---run_data_pipeline=false \
---run_inference=true
+    $pipelinedir/run-af3-structure-prediction.sh \
+    --json_path=${json_path} \
+    --output_dir=output \
+    --run_data_pipeline=false \
+    --run_inference=true
 
 fi
 

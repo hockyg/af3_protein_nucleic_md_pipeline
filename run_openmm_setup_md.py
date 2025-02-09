@@ -42,6 +42,7 @@ def run_md(cif_file):
         #this part is to remove 5' phosphorylation on nucleic acids
         for chainidx, chain in enumerate(chains):
             residues = [r for r in chain.residues()]
+            #print(residues[0].name)
             if residues[0].name in ["A","C","T","G","U"]:
                 atoms0 = residues[0].atoms()
                 for atom in atoms0:
