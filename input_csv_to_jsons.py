@@ -30,14 +30,14 @@ def create_json_file(input_csv_row, output_json_file, mutid=0, ref=False):
     if(nuc_strand_2):
         print("2 nucleotide strands")
         num_nuc_chains = 2
-        nuc_string = """{
+        nuc_string = """{{
             "id": ["B"],
             "sequence": "%s"
             },
             {
             "id": ["C"],
             "sequence": "%s"
-            }"""%(nuc_strand_1.strip(), nuc_strand_2.strip())
+            }}"""%(nuc_strand_1.strip(), nuc_strand_2.strip())
     else:
         num_nuc_chains = 1
         nuc_string = """{
@@ -113,6 +113,8 @@ df = pd.read_csv(input_file,keep_default_na=False)
 
 name_count_dict = {}
 
+json_files_to_run = []
+
 for index, row in df.iterrows():
     name = row["uniprot_id"].lower()
     protein_output_dir = os.path.join(output_folder,name)
@@ -128,8 +130,15 @@ for index, row in df.iterrows():
     output_ref_json_file = os.path.join(protein_output_dir,f"{name}_ref.input.json")
     output_mut_json_file = os.path.join(protein_output_dir,f"{name}_mut{mutid}.input.json")
 
+    if name_count_dict[name] == 1:
+        json_files_to_run.append(output_ref_json_file)
+    json_files_to_run.append(output_mut_json_file)
+
     if not os.path.exists(output_ref_json_file):
         create_json_file(row, output_ref_json_file, ref=True)
-    create_json_file(row, output_mut_json_file, mutid=mutid, ref=False)
+    if not os.path.exists(output_mut_json_file):
+        create_json_file(row, output_mut_json_file, mutid=mutid, ref=False)
 
-
+# print list of json files to a file in the output folder
+with open(os.path.join(output_folder,"json_files_to_run.txt"),'w') as fh:
+    fh.write("\n".join(json_files_to_run))
