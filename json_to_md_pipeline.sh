@@ -6,6 +6,7 @@ if [ -z "$input_file" ];then
 fi
 
 label=$(basename $input_file .input.json)
+prefix=$(dirname $input_file)/$label
 
 #Step 2, run alphafold prediction in two steps
 job_name=predict_$label

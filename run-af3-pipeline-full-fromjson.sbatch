@@ -15,11 +15,12 @@ if [ -z "$input_json" ];then
 fi
 
 pipelinedir=/home/gmh4/projects/binding_affinity_md_af/af3_protein_rna_pipeline
-output_dir=$(dirname $input_json)
 label=$(basename $input_json .input.json)
+output_dir=$(dirname $input_json)/$label
+mkdir -p $output_dir
 
 #This step writes to the following file due to af3 logic
-output_json=$(echo $input_json  | sed -e 's,\.input,.data,')
+output_json=${output_dir}/${label}_data.json
 
 if [ ! -e ${output_json} ];then
     $pipelinedir/run-af3-structure-prediction.sh \

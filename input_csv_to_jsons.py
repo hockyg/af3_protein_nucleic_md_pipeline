@@ -2,7 +2,7 @@ import os
 import sys
 
 def create_json_file(input_csv_row, output_json_file, mutid=0, ref=False):
-    name = input_csv_row["uniprot_id"]
+    name = input_csv_row["uniprot_id"].lower()
     protein_seq = input_csv_row["peptide_sequence"]
 
     output_energy_file = output_json_file.replace(".input.json",".energy.txt")
@@ -114,7 +114,7 @@ df = pd.read_csv(input_file,keep_default_na=False)
 name_count_dict = {}
 
 for index, row in df.iterrows():
-    name = row["uniprot_id"]
+    name = row["uniprot_id"].lower()
     protein_output_dir = os.path.join(output_folder,name)
     os.makedirs(protein_output_dir,exist_ok=True)
 
@@ -131,7 +131,5 @@ for index, row in df.iterrows():
     if not os.path.exists(output_ref_json_file):
         create_json_file(row, output_ref_json_file, ref=True)
     create_json_file(row, output_mut_json_file, mutid=mutid, ref=False)
-
-
 
 
