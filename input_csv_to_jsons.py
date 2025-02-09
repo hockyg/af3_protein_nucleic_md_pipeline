@@ -45,7 +45,7 @@ def create_json_file(input_csv_row, output_json_file, mutid=0, ref=False):
             "sequence": "%s"
             }"""%(nuc_strand_1.strip()) 
 
-    ion_chains = ",".join( numbers_to_chains(list(range(num_nuc_chains+1,num_nuc_chains+1+len(nuc_strand_1)))) )
+    ion_chains = ",".join( numbers_to_chains(list(range(num_nuc_chains+2,num_nuc_chains+2+len(nuc_strand_1)))) )
     
 
     output_json_template = """{
