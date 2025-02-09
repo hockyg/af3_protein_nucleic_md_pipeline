@@ -30,20 +30,24 @@ def create_json_file(input_csv_row, output_json_file, mutid=0, ref=False):
     if(nuc_strand_2):
         print("2 nucleotide strands")
         num_nuc_chains = 2
-        nuc_string = """{{
-            "id": ["B"],
-            "sequence": "%s"
+        nuc_string = """{
+                "%s": {
+                "id": ["B"],
+                "sequence": "%s"
+                }
             },
             {
-            "id": ["C"],
-            "sequence": "%s"
-            }}"""%(nuc_strand_1.strip(), nuc_strand_2.strip())
+                "%s": {
+                "id": ["C"],
+                "sequence": "%s"
+                }
+            }"""%(nuc_name, nuc_strand_1.strip(), nuc_name, nuc_strand_2.strip())
     else:
         num_nuc_chains = 1
-        nuc_string = """{
+        nuc_string = """{%s: {
             "id": ["B"],
             "sequence": "%s"
-            }"""%(nuc_strand_1.strip()) 
+            }}"""%(nuc_name, nuc_strand_1.strip()) 
 
     ion_chains = ",".join( numbers_to_chains(list(range(num_nuc_chains+2,num_nuc_chains+2+len(nuc_strand_1)))) )
     
@@ -57,9 +61,7 @@ def create_json_file(input_csv_row, output_json_file, mutid=0, ref=False):
                 "sequence": "%s"
             }
         },
-        {
-            "%s": %s
-        },
+        %s,
         {
             "ligand": {
                     "id": [%s],
@@ -72,7 +74,7 @@ def create_json_file(input_csv_row, output_json_file, mutid=0, ref=False):
     "version": 1
     }"""
 
-    output_json = output_json_template%(name, protein_seq.strip(), nuc_name, nuc_string, ion_chains)
+    output_json = output_json_template%(name, protein_seq.strip(), nuc_string, ion_chains)
 
     print(f"# Writing sequence data for {nuc_name} + mut {mutid}, to {output_json_file}")
     with open(output_json_file,'w') as fh:
